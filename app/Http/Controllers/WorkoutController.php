@@ -89,11 +89,21 @@ class WorkoutController extends Controller
     {
         $userId = Auth::id();
 
-        $dates = Workout::where('user_id', $userId)
-            ->select('workout_date')
-            ->distinct()
-            ->orderBy('workout_date', 'desc')
-            ->pluck('workout_date');
+        // 筋トレと有酸素の両方から日付を取得して統合
+        $workoutDates = Workout::where('user_id', $userId)
+            ->pluck('workout_date')
+            ->toArray();
+        
+        $cardioDates = Cardio::where('user_id', $userId)
+            ->pluck('cardio_date')
+            ->toArray();
+        
+        // 両方の日付を統合してユニークにし、降順でソート
+        $dates = collect(array_merge($workoutDates, $cardioDates))
+            ->unique()
+            ->sort()
+            ->reverse()
+            ->values();
 
         // 全ワークアウトを日付ごとにグループ化
         $groupedWorkouts = Workout::where('user_id', $userId)
